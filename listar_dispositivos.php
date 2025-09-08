@@ -4,52 +4,69 @@ if (!isset($_SESSION['usuario'])) {
     header("Location: login.php");
     exit;
 }
+
 $conn = new mysqli("localhost","root","","sistema_seguranca");
 if ($conn->connect_error) { die("Erro de conexão: " . $conn->connect_error); }
 
+// helper para escapar HTML
 function safe($s){ return htmlspecialchars((string)$s ?? '', ENT_QUOTES, 'UTF-8'); }
 ?>
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Sistema de Segurança - Multisat</title>
-  <style>
-    :root{ --brand:#b30000; --bg:#f4f6f9; --card:#ffffff; --border:#e5e7eb; --text:#111827; --muted:#6b7280; }
-    *{box-sizing:border-box}
-    body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);margin:0;color:var(--text)}
-    header{ background:var(--brand); color:#fff; padding:12px 20px; display:flex; align-items:center; justify-content:space-between; gap:16px }
-    header img{ height:46px }
-    nav a{ color:#fff; text-decoration:none; font-weight:bold; padding:8px 12px; border-radius:6px; background:rgba(255,255,255,.12); margin-left:8px }
-    nav a:hover{ background:rgba(255,255,255,.22) }
-    .container{max-width:1100px;margin:18px auto;padding:0 14px}
-    .card{ background:var(--card); border:1px solid var(--border); border-radius:12px; box-shadow:0 4px 16px rgba(0,0,0,.05); overflow:hidden; margin-bottom:16px }
-    .section-title{ font-size:18px; font-weight:700; padding:14px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; background:#fff }
-    .hint{ color:var(--muted); font-size:12px }
-    .local-row{ display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-top:1px solid var(--border); background:#fff; cursor:pointer; }
-    .local-row:hover{ background:#fafafa }
-    .local-name{ font-weight:700; color:#065f46 }
-    .table-wrap{ display:none; background:#fff }
-    table{ width:100%; border-collapse:collapse }
-    th,td{ padding:10px 12px; border-top:1px solid var(--border); text-align:left }
-    thead th{ background:var(--brand); color:#fff; border-top:none }
-    td.actions a{ text-decoration:none; font-weight:600; margin-right:8px; padding:6px 10px; border-radius:6px; border:1px solid var(--border); background:#fff; color:#1f2937; }
-    td.actions a:hover{ background:#f3f4f6 }
-    .empty{ padding:18px; color:var(--muted) }
-  </style>
+<meta charset="utf-8">
+<title>Dispositivos - Multisat</title>
+<style>
+:root{--brand:#b30000;--bg:#f4f6f9;--card:#fff;--border:#e5e7eb;--text:#111827;--muted:#6b7280}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+
+/* === HEADER IGUAL AO CADASTRAR === */
+header{background:var(--brand);padding:14px 20px;display:flex;justify-content:center;align-items:center}
+header .logo img{height:125px;display:block}
+
+/* === BARRA DE AÇÕES IGUAL AO CADASTRAR === */
+.top-actions{display:flex;gap:10px;justify-content:center;margin:12px 0}
+.top-actions a{padding:8px 12px;border-radius:10px;text-decoration:none;font-weight:700;border:1px solid var(--border);background:#fff;color:#111827}
+.top-actions a.primary{background:#16a34a;color:#fff;border-color:#16a34a}
+
+/* === CONTEÚDO === */
+.container{max-width:900px;margin:10px auto 22px;padding:0 14px}
+.card{background:rgba(255,255,255,.88);border:1px solid var(--border);border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.08);overflow:hidden;margin-bottom:14px}
+.section-title{padding:16px 18px;border-bottom:1px solid var(--border);font-weight:700;display:flex;align-items:center;justify-content:space-between;background:#fff}
+.hint{color:var(--muted);font-size:12px}
+.local-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border);background:#fff;cursor:pointer}
+.local-row:hover{background:#fafafa}
+.local-name{font-weight:700;color:#065f46}
+.table-wrap{display:none;background:#fff}
+
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px 12px;border-top:1px solid var(--border);text-align:left}
+thead th{background:var(--brand);color:#fff;border-top:none}
+
+td.actions a{ text-decoration:none;font-weight:600;margin-right:8px;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:#fff;color:#1f2937 }
+td.actions a:hover{ background:#f3f4f6 }
+
+.empty{padding:18px;color:var(--muted)}
+</style>
 </head>
 <body>
+
+<!-- HEADER e LOGO (iguais ao cadastrar) -->
 <header>
-  <img src="/dispositivos/imagens/logo.png" alt="Logo Multisat" />
-  <nav>
-    <a href="cadastrar_dispositivo.php">+ Adicionar Dispositivo</a>
-    <a href="listar_dispositivos.php">Lista</a>
-    <a href="logout.php">Sair</a>
-  </nav>
+  <div class="logo"><img src="imagens/logo.png" alt="Logo Multisat"></div>
 </header>
+
+<!-- BARRA DE AÇÕES (iguais ao cadastrar) -->
+<div class="top-actions">
+  <a class="primary" href="listar_dispositivos.php">Lista</a>
+  <a href="cadastrar_dispositivo.php">+ Adicionar Dispositivo</a>
+  <a href="logout.php">Sair</a>
+</div>
 
 <div class="container">
 <?php
+// lista de condomínios
 $condos = $conn->query("
   SELECT DISTINCT condominio
   FROM dispositivos
@@ -69,6 +86,7 @@ if (!$condos || $condos->num_rows === 0){
         <div class="hint">Clique no local para abrir/fechar a lista</div>
       </div>
       <?php
+      // locais por condomínio
       $locais = $conn->query("
         SELECT DISTINCT COALESCE(NULLIF(local, ''), 'Sem local definido') AS local_norm
         FROM dispositivos
@@ -102,8 +120,8 @@ if (!$condos || $condos->num_rows === 0){
               <tbody>
               <?php
               $sql = "
-                SELECT id, ip, usuario, nome_dispositivo, mac, modelo, observacao
-                     , '******' AS senha_mask
+                SELECT id, ip, usuario, nome_dispositivo, mac, modelo, observacao,
+                       '******' AS senha_mask
                 FROM dispositivos
                 WHERE condominio = '".$conn->real_escape_string($condominio)."'
                   AND COALESCE(NULLIF(local,''), 'Sem local definido') = '".$conn->real_escape_string($local)."'
@@ -123,7 +141,8 @@ if (!$condos || $condos->num_rows === 0){
                     <td><?php echo safe($d['observacao']); ?></td>
                     <td class="actions">
                       <a href="editar_dispositivo.php?id=<?php echo (int)$d['id']; ?>">Editar</a>
-                      <a href="excluir_dispositivo.php?id=<?php echo (int)$d['id']; ?>" onclick="return confirm('Deseja excluir este dispositivo?')">Excluir</a>
+                      <a href="excluir_dispositivo.php?id=<?php echo (int)$d['id']; ?>"
+                         onclick="return confirm('Deseja excluir este dispositivo?')">Excluir</a>
                     </td>
                   </tr>
                   <?php
@@ -150,11 +169,11 @@ $conn->close();
 </div>
 
 <script>
-  function toggleTable(id){
-    var el = document.getElementById(id);
-    if (!el) return;
-    el.style.display = (el.style.display === "none" || el.style.display === "") ? "block" : "none";
-  }
+function toggleTable(id){
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = (el.style.display === "none" || el.style.display === "") ? "block" : "none";
+}
 </script>
 </body>
 </html>
